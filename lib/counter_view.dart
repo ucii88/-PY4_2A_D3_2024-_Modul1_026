@@ -59,7 +59,18 @@ class _CounterViewState extends State<CounterView> {
                   : ListView.builder(
                       itemCount: controller.history.length,
                       itemBuilder: (context, index) {
-                        return Text("- ${controller.history[index]}");
+                        final historyText = controller.history[index];
+
+                        Color textColor = Colors.black;
+                        if (historyText.contains("bertambah")) {
+                          textColor = Colors.green;
+                        } else if (historyText.contains("berkurang")) {
+                          textColor = Colors.red;
+                        }
+                        return Text(
+                          "- ${controller.history[index]}",
+                          style: TextStyle(color: textColor),
+                        );
                       },
                     ),
             ),
@@ -72,6 +83,7 @@ class _CounterViewState extends State<CounterView> {
         children: [
           FloatingActionButton(
             heroTag: "decrement",
+            backgroundColor: Colors.red,
             onPressed: () {
               setState(() {
                 controller.decrement();
@@ -84,9 +96,32 @@ class _CounterViewState extends State<CounterView> {
           FloatingActionButton(
             heroTag: "reset",
             onPressed: () {
-              setState(() {
-                controller.reset();
-              });
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: Text("Konfirmasi"),
+                    content: Text("Yakin ingin reset?"),
+                    actions: [
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: Text("Batal"),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            controller.reset();
+                          });
+                          Navigator.pop(context);
+                        },
+                        child: Text("Reset"),
+                      ),
+                    ],
+                  );
+                },
+              );
             },
             child: const Icon(Icons.refresh),
           ),
@@ -94,6 +129,7 @@ class _CounterViewState extends State<CounterView> {
 
           FloatingActionButton(
             heroTag: "increment",
+            backgroundColor: Colors.green,
             onPressed: () {
               setState(() {
                 controller.increment();
