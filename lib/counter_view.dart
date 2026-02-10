@@ -14,43 +14,70 @@ class _CounterViewState extends State<CounterView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Logbook : SRP version")),
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 176, 164, 246),
+        title: const Text(
+          "Logbook : SRP version",
+          style: TextStyle(color: Color.fromARGB(255, 79, 30, 152)),
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            TextField(
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "Masukkan Step",
-                border: OutlineInputBorder(),
+            const SizedBox(height: 120),
+            Card(
+              elevation: 3,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
               ),
-              onChanged: (value) {
-                setState(() {
-                  controller.setStep(int.tryParse(value) ?? 1);
-                });
-              },
-            ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    TextField(
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: "Masukkan Step",
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          controller.setStep(int.tryParse(value) ?? 1);
+                        });
+                      },
+                    ),
 
-            const SizedBox(height: 20),
+                    const SizedBox(height: 16),
 
-            const Text('Total Hitungan:'),
-            Text(
-              '${controller.value}',
-              style: Theme.of(context).textTheme.headlineMedium,
+                    const Text(
+                      "Total Hitungan",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(height: 6),
+
+                    Text(
+                      '${controller.value}',
+                      style: Theme.of(context).textTheme.headlineLarge
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
             ),
 
             const SizedBox(height: 20),
             const Divider(),
             const Text(
               "Riwayat Aktivitas",
-              style: TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
 
-            Expanded(
+            Flexible(
               child: controller.history.isEmpty
-                  ? const Center(
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 16),
                       child: Text(
                         "Belum ada aktivitas",
                         style: TextStyle(color: Colors.grey),
@@ -67,9 +94,12 @@ class _CounterViewState extends State<CounterView> {
                         } else if (historyText.contains("berkurang")) {
                           textColor = Colors.red;
                         }
-                        return Text(
-                          "- ${controller.history[index]}",
-                          style: TextStyle(color: textColor),
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Text(
+                            "- $historyText",
+                            style: TextStyle(color: textColor),
+                          ),
                         );
                       },
                     ),
@@ -78,7 +108,10 @@ class _CounterViewState extends State<CounterView> {
         ),
       ),
 
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+
       floatingActionButton: Row(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           FloatingActionButton(
@@ -91,7 +124,7 @@ class _CounterViewState extends State<CounterView> {
             },
             child: const Icon(Icons.remove),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
 
           FloatingActionButton(
             heroTag: "reset",
