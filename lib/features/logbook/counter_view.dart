@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'counter_controller.dart';
+import 'package:logbook_app/features/onboarding/onboarding_view.dart';
 
 class CounterView extends StatefulWidget {
-  const CounterView({super.key});
+  final String username;
+  const CounterView({super.key, this.username = "User"});
 
   @override
   State<CounterView> createState() => _CounterViewState();
@@ -18,6 +20,13 @@ class _CounterViewState extends State<CounterView> {
     super.dispose();
   }
 
+  String greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return "Selamat Pagi";
+    if (hour < 17) return "Selamat Siang";
+    return "Selamat Malam";
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -26,19 +35,67 @@ class _CounterViewState extends State<CounterView> {
         appBar: AppBar(
           backgroundColor: const Color.fromARGB(255, 176, 164, 246),
           centerTitle: true,
-          title: const Text(
-            "Logbook : SRP version",
+          title: Text(
+            "Logbook : (${widget.username})",
             style: TextStyle(
               color: Color.fromARGB(255, 79, 30, 152),
               fontWeight: FontWeight.bold,
             ),
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text("Konfirmasi Logout"),
+                      content: const Text(
+                        "Apakah Anda yakin? Data yang belum disimpan mungkin akan hilang.",
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text("Batal"),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const OnboardingView(),
+                              ),
+                              (route) => false,
+                            );
+                          },
+                          child: const Text(
+                            "Ya, Keluar",
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+          ],
         ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              const SizedBox(height: 60),
+              const SizedBox(height: 40),
+              Text(
+                "${greeting()}, ${widget.username}!",
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 30),
               Card(
                 elevation: 3,
                 shape: RoundedRectangleBorder(
