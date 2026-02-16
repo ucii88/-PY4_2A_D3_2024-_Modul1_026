@@ -1,10 +1,9 @@
 class LoginController {
-  final String _validUsername = "admin";
-  final String _validPassword = "password123";
+  final Map<String, String> _users = {"admin": "123", "uci": "456"};
 
-  bool login(String username, String password) {
-    if (username == _validUsername && password == _validPassword) {
-      return true;
+  bool validateLogin(String username, String password) {
+    if (_users.containsKey(username)) {
+      return _users[username] == password;
     }
     return false;
   }
