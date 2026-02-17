@@ -15,6 +15,14 @@ class _CounterViewState extends State<CounterView> {
   final TextEditingController stepController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    controller.loadData(widget.username).then((_) {
+      setState(() {});
+    });
+  }
+
+  @override
   void dispose() {
     stepController.dispose();
     super.dispose();
@@ -164,9 +172,9 @@ class _CounterViewState extends State<CounterView> {
                           final historyText = controller.history[index];
 
                           Color textColor = Colors.black;
-                          if (historyText.contains("bertambah")) {
+                          if (historyText.contains("menambah")) {
                             textColor = Colors.green;
-                          } else if (historyText.contains("berkurang")) {
+                          } else if (historyText.contains("mengurangi")) {
                             textColor = Colors.red;
                           }
                           return Padding(
@@ -184,73 +192,59 @@ class _CounterViewState extends State<CounterView> {
         ),
 
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-
-        floatingActionButton: AnimatedPadding(
-          duration: const Duration(milliseconds: 200),
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? 20 : 0,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              FloatingActionButton(
-                heroTag: "decrement",
-                backgroundColor: Colors.red,
-                onPressed: () {
-                  setState(() {
-                    controller.decrement();
-                  });
-                },
-                child: const Icon(Icons.remove),
-              ),
-              const SizedBox(width: 12),
-
-              FloatingActionButton(
-                heroTag: "reset",
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) {
-                      return AlertDialog(
-                        title: Text("Konfirmasi"),
-                        content: Text("Yakin ingin reset?"),
-                        actions: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            child: Text("Batal"),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                controller.reset();
-                              });
-                              Navigator.pop(context);
-                            },
-                            child: Text("Reset"),
-                          ),
-                        ],
-                      );
-                    },
-                  );
-                },
-                child: const Icon(Icons.refresh),
-              ),
-              const SizedBox(width: 10),
-
-              FloatingActionButton(
-                heroTag: "increment",
-                backgroundColor: Colors.green,
-                onPressed: () {
-                  setState(() {
-                    controller.increment();
-                  });
-                },
-                child: const Icon(Icons.add),
-              ),
-            ],
-          ),
+        floatingActionButton: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FloatingActionButton(
+              heroTag: "decrement",
+              backgroundColor: Colors.red,
+              onPressed: () async {
+                await controller.decrement(widget.username);
+                setState(() {});
+              },
+              child: const Icon(Icons.remove),
+            ),
+            const SizedBox(width: 12),
+            FloatingActionButton(
+              heroTag: "reset",
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: const Text("Konfirmasi"),
+                      content: const Text("Yakin ingin reset?"),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text("Batal"),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            await controller.reset(widget.username);
+                            setState(() {});
+                            Navigator.pop(context);
+                          },
+                          child: const Text("Reset"),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+              child: const Icon(Icons.refresh),
+            ),
+            const SizedBox(width: 12),
+            FloatingActionButton(
+              heroTag: "increment",
+              backgroundColor: Colors.green,
+              onPressed: () async {
+                await controller.increment(widget.username);
+                setState(() {});
+              },
+              child: const Icon(Icons.add),
+            ),
+          ],
         ),
       ),
     );

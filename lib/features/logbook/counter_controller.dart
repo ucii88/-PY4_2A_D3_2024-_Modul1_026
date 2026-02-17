@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+
 class CounterController {
   int _counter = 0;
   int _step = 1;
@@ -11,30 +14,53 @@ class CounterController {
     _step = step;
   }
 
-  void _addHistory(String action) {
+  Future<void> loadData(String username) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    _counter = prefs.getInt('counter_$username') ?? 0;
+
+    final historyString = prefs.getString('history_$username');
+    if (historyString != null) {
+      final decoded = jsonDecode(historyString) as List;
+      _history.clear();
+      _history.addAll(decoded.cast<String>());
+    }
+  }
+
+  Future<void> _saveData(String username) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setInt('counter_$username', _counter);
+    await prefs.setString('history_$username', jsonEncode(_history));
+  }
+
+  void _addHistory(String username, String action) {
     final time = _getCurrentTime();
-    _history.insert(0, "$action $_counter ($time)");
+    _history.insert(0, "User $username $action $_counter ($time)");
 
     if (_history.length > 5) {
       _history.removeLast();
     }
   }
 
-  void increment() {
+  Future<void> increment(String username) async {
     _counter += _step;
-    _addHistory("Nilai bertambah +$_step, total menjadi :");
+    _addHistory(username, "menambah +$_step menjadi");
+    await _saveData(username);
   }
 
-  void decrement() {
+  Future<void> decrement(String username) async {
     if (_counter > 0) {
       _counter -= _step;
-      _addHistory("Nilai berkurang -$_step, total menjadi :");
+      _addHistory(username, "mengurangi -$_step menjadi");
+      await _saveData(username);
     }
   }
 
-  void reset() {
+  Future<void> reset(String username) async {
     _counter = 0;
-    _addHistory("Nilai direset, total kembali ke ");
+    _addHistory(username, "mereset ke");
+    await _saveData(username);
   }
 
   String _getCurrentTime() {
