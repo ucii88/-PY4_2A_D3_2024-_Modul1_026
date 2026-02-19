@@ -28,25 +28,18 @@ class _CounterViewState extends State<CounterView> {
     super.dispose();
   }
 
-  String greeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return "Selamat Pagi";
-    if (hour < 17) return "Selamat Siang";
-    return "Selamat Malam";
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: const Color.fromARGB(255, 176, 164, 246),
+          backgroundColor: const Color.fromARGB(255, 254, 166, 209),
           centerTitle: true,
           title: Text(
             "Logbook : (${widget.username})",
             style: TextStyle(
-              color: Color.fromARGB(255, 79, 30, 152),
+              color: const Color.fromARGB(255, 255, 255, 255),
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -60,7 +53,7 @@ class _CounterViewState extends State<CounterView> {
                     return AlertDialog(
                       title: const Text("Konfirmasi Logout"),
                       content: const Text(
-                        "Apakah Anda yakin? Data yang belum disimpan mungkin akan hilang.",
+                        "Apakah Anda yakin ingin keluar? Data tetap tersimpan.",
                       ),
                       actions: [
                         TextButton(
@@ -97,10 +90,11 @@ class _CounterViewState extends State<CounterView> {
             children: [
               const SizedBox(height: 40),
               Text(
-                "${greeting()}, ${widget.username}!",
+                "${controller.greeting()}, ${widget.username}!",
                 style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 40,
+                  fontFamily: "Relationship",
+                  color: const Color.fromARGB(255, 253, 145, 197),
                 ),
               ),
               const SizedBox(height: 30),
@@ -207,6 +201,7 @@ class _CounterViewState extends State<CounterView> {
             const SizedBox(width: 12),
             FloatingActionButton(
               heroTag: "reset",
+              backgroundColor: const Color.fromARGB(255, 254, 166, 209),
               onPressed: () {
                 showDialog(
                   context: context,
@@ -224,6 +219,15 @@ class _CounterViewState extends State<CounterView> {
                             await controller.reset(widget.username);
                             setState(() {});
                             Navigator.pop(context);
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "User ${widget.username} berhasil mereset data.",
+                                ),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
                           },
                           child: const Text("Reset"),
                         ),
