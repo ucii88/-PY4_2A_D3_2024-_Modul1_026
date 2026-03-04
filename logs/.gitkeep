@@ -1,0 +1,3 @@
+# Folder ini digunakan untuk menyimpan file log aplikasi
+# File logs (*.log) akan diabaikan oleh git (lihat .gitignore)
+# .gitkeep memastikan folder ini tercek dalam repository

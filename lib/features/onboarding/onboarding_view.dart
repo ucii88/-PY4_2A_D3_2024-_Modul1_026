@@ -32,7 +32,6 @@ class _OnboardingViewState extends State<OnboardingView> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            // 🔹 Skip Button
             Align(
               alignment: Alignment.topRight,
               child: TextButton(
@@ -42,7 +41,13 @@ class _OnboardingViewState extends State<OnboardingView> {
                     MaterialPageRoute(builder: (_) => const LoginView()),
                   );
                 },
-                child: const Text("Skip"),
+                child: const Text(
+                  "Skip",
+                  style: TextStyle(
+                    color: Color.fromARGB(255, 254, 166, 209),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
             ),
 
@@ -58,7 +63,11 @@ class _OnboardingViewState extends State<OnboardingView> {
             Text(
               controller.onboardingData[controller.step]["text"]!,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 18),
+              style: const TextStyle(
+                fontSize: 18,
+                color: Color.fromARGB(255, 254, 166, 209),
+                fontWeight: FontWeight.w600,
+              ),
             ),
 
             const SizedBox(height: 40),
@@ -72,7 +81,9 @@ class _OnboardingViewState extends State<OnboardingView> {
                   width: controller.step == index ? 12 : 8,
                   height: controller.step == index ? 12 : 8,
                   decoration: BoxDecoration(
-                    color: controller.step == index ? Colors.blue : Colors.grey,
+                    color: controller.step == index
+                        ? const Color.fromARGB(255, 254, 166, 209)
+                        : Colors.grey,
                     shape: BoxShape.circle,
                   ),
                 ),

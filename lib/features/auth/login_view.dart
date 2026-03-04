@@ -50,7 +50,7 @@ class _LoginViewState extends State<LoginView> {
       _loginAttempts = 0;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => LogView()),
+        MaterialPageRoute(builder: (context) => LogView(username: username)),
       );
     } else {
       _loginAttempts++;
