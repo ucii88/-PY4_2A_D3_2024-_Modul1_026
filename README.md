@@ -1,196 +1,144 @@
-# hello_app
+# 📝 Aplikasi LogBook
 
-A new Flutter project.
+Aplikasi mobile untuk mencatat aktivitas harian dengan kategori yang berbeda-beda. Dibuat menggunakan Flutter dengan integrasi MongoDB Atlas.
 
-## Getting Started
+## ✨ Fitur Utama
 
-This project is a starting point for a Flutter application.
+### 🔐 **Login & Authentication**
+- Login dengan username dan password
+- Session management
+- Interface yang user-friendly
 
-A few resources to get you started if this is your first Flutter project:
+### 📖 **LogBook (Catat Aktivitas)**
+- **Tambah catatan** dengan judul dan deskripsi
+- **Kategori warna-warni:**
+  - 🌸 **Pribadi** - Pink
+  - 💼 **Pekerjaan** - Biru  
+  - 🚨 **Urgent** - Merah
+- **Pencarian catatan** berdasarkan kata kunci
+- **Edit & hapus** catatan
+- **Sync dengan cloud** (MongoDB Atlas)
+- **Mode offline** - bisa digunakan tanpa internet
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### 🔢 **Counter**
+- Hitung angka dengan step yang bisa diatur
+- Riwayat aktivitas penambahan/pengurangan
+- Reset counter dengan konfirmasi
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### 🌐 **Online/Offline Support**
+- **Online**: Data tersimpan di MongoDB Atlas
+- **Offline**: Data tersimpan lokal, sync otomatis saat online
+- **Indikator status koneksi** di header
 
+## 🎨 **Tampilan**
 
-import 'dart:developer' as dev;
-import 'dart:io';
-import 'package:intl/intl.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:path_provider/path_provider.dart';
+- **Design modern** dengan warna pink theme
+- **Card design** untuk setiap catatan
+- **Kategori dengan warna berbeda** (background penuh)
+- **Icon yang intuitif** untuk setiap aksi
+- **Responsive design** untuk berbagai ukuran layar
 
-class LogHelper {
-  static Directory? _logsDirectory;
+## 🛠️ **Teknologi**
 
-  static Future<void> initialize() async {
-    try {
-      await _getLogsDirectory();
-    } catch (e) {
-      dev.log("Failed to initialize logs directory: $e", name: "LogHelper");
-    }
-  }
+- **Frontend**: Flutter (Dart)
+- **Database**: MongoDB Atlas 
+- **State Management**: StatefulWidget
+- **Local Storage**: File System
+- **Package**: 
+  - `flutter_dotenv` - Environment variables
+  - `mongo_dart` - MongoDB integration
+  - `connectivity_plus` - Network connectivity
+  - `intl` - Date formatting
+  - `path_provider` - File system access
 
-  static Future<Directory> _getLogsDirectory() async {
-    if (_logsDirectory != null && await _logsDirectory!.exists()) {
-      return _logsDirectory!;
-    }
+## 🚀 **Setup & Installation**
 
-    try {
-      final projectLogsDir = Directory('logs');
-      try {
-        if (!await projectLogsDir.exists()) {
-          await projectLogsDir.create(recursive: true);
-        }
-        _logsDirectory = projectLogsDir;
-        dev.log(
-          "✅ Logs directory created at: ${projectLogsDir.path}",
-          name: "LogHelper",
-          level: 800,
-        );
-        return projectLogsDir;
-      } catch (e) {
-        throw Exception("Relative path failed: $e");
-      }
-    } catch (e) {
-      try {
-        final appDocDir = await getApplicationDocumentsDirectory();
-        final appLogsDir = Directory('${appDocDir.path}/logs');
+### 1. Clone Repository
+```bash
+git clone <repository-url>
+cd logbook_app
+```
 
-        if (!await appLogsDir.exists()) {
-          await appLogsDir.create(recursive: true);
-        }
+### 2. Install Dependencies
+```bash
+flutter pub get
+```
 
-        _logsDirectory = appLogsDir;
-        dev.log(
-          "✅ Logs directory created at: ${appLogsDir.path}",
-          name: "LogHelper",
-          level: 800,
-        );
-        return appLogsDir;
-      } catch (e) {
-        dev.log(
-          "⚠️ Failed to get logs directory: $e, using temp",
-          name: "LogHelper",
-          level: 900,
-        );
-        final tempDir = Directory.systemTemp;
-        final tempLogsDir = Directory('${tempDir.path}/logbook_logs');
-        if (!await tempLogsDir.exists()) {
-          await tempLogsDir.create(recursive: true);
-        }
-        _logsDirectory = tempLogsDir;
-        return tempLogsDir;
-      }
-    }
-  }
+### 3. Setup Environment
+```bash
+# Buat file .env di root folder
+MONGODB_URI=mongodb://username:password@host:port/database
+LOG_LEVEL=3
+LOG_MUTE=
+```
 
-  static String _getLogFileName() {
-    final now = DateTime.now();
-    return '${DateFormat('dd-MM-yyyy').format(now)}.log';
-  }
+### 4. Run Application
+```bash
+flutter run
+```
 
-  static Future<void> writeLog(
-    String message, {
-    String source = "Unknown",
-    int level = 2,
-  }) async {
-    final int configLevel = int.tryParse(dotenv.env['LOG_LEVEL'] ?? '2') ?? 2;
-    final String muteList = dotenv.env['LOG_MUTE'] ?? '';
+## 📱 **Cara Penggunaan**
 
-    if (level > configLevel) return;
-    if (muteList.split(',').map((s) => s.trim()).contains(source)) return;
+### Login
+1. Masukkan username dan password
+2. Klik "Masuk" untuk masuk ke aplikasi
 
-    try {
-      String timestamp = DateFormat('HH:mm:ss').format(DateTime.now());
-      String fullTimestamp = DateFormat(
-        'dd-MM-yyyy HH:mm:ss',
-      ).format(DateTime.now());
-      String label = _getLabel(level);
-      String color = _getColor(level);
-      String logLine = '[$fullTimestamp] [$label] [$source] -> $message';
-      dev.log(message, name: source, time: DateTime.now(), level: level * 100);
-      // ignore: avoid_print
-      print('$color[$timestamp][$label][$source] -> $message\x1B[0m');
-      await _writeToFile(logLine);
-    } catch (e) {
-      dev.log("Logging failed: $e", name: "SYSTEM", level: 1000);
-    }
-  }
+### Menambah Catatan
+1. Klik tombol "+" di halaman LogBook
+2. Isi judul dan deskripsi catatan
+3. Pilih kategori (Pribadi/Pekerjaan/Urgent)
+4. Klik "Simpan"
 
-  static Future<void> _writeToFile(String logLine) async {
-    try {
-      final logsDir = await _getLogsDirectory();
-      final fileName = _getLogFileName();
-      final logFile = File('${logsDir.path}/$fileName');
-      await logFile.writeAsString(
-        '$logLine\n',
-        mode: FileMode.append,
-        flush: true,
-      );
-    } catch (e) {
-      dev.log(
-        "Failed to write to log file: $e",
-        name: "LogHelper",
-        level: 1000,
-      );
-    }
-  }
+### Mencari Catatan
+1. Gunakan search bar di atas
+2. Ketik kata kunci yang dicari
+3. Hasil akan difilter otomatis
 
-  static Future<String> getLogsFromFile() async {
-    try {
-      final logsDir = await _getLogsDirectory();
-      final fileName = _getLogFileName();
-      final logFile = File('${logsDir.path}/$fileName');
+### Counter
+1. Masuk ke tab Counter
+2. Tentukan step penambahan/pengurangan
+3. Gunakan tombol + atau - untuk mengubah nilai
+4. Lihat riwayat aktivitas di bawah
 
-      if (await logFile.exists()) {
-        return await logFile.readAsString();
-      }
-      return "No logs for today";
-    } catch (e) {
-      return "Error reading logs: $e";
-    }
-  }
+## 📂 **Struktur Folder**
+```
+lib/
+├── main.dart                  # Entry point aplikasi
+├── features/
+│   ├── auth/                 # Login & authentication
+│   ├── logbook/             # Fitur catatan
+│   ├── counter/             # Fitur counter
+│   └── onboarding/          # Welcome screen
+├── services/
+│   ├── mongo_service.dart   # MongoDB integration
+│   └── connectivity_service.dart # Network status
+├── helpers/
+│   └── log_helper.dart      # Logging utility
+└── models/
+    └── logbook_model.dart   # Data model
+```
 
-  static Future<void> clearTodaysLogs() async {
-    try {
-      final logsDir = await _getLogsDirectory();
-      final fileName = _getLogFileName();
-      final logFile = File('${logsDir.path}/$fileName');
+## 🔧 **Development**
 
-      if (await logFile.exists()) {
-        await logFile.delete();
-      }
-    } catch (e) {
-      dev.log("Error clearing logs: $e", name: "SYSTEM", level: 1000);
-    }
-  }
+### Build untuk Release
+```bash
+# Android
+flutter build apk --release
 
-  static String _getLabel(int level) {
-    switch (level) {
-      case 1:
-        return "ERROR";
-      case 2:
-        return "INFO";
-      case 3:
-        return "VERBOSE";
-      default:
-        return "LOG";
-    }
-  }
+# iOS  
+flutter build ios --release
 
-  static String _getColor(int level) {
-    switch (level) {
-      case 1:
-        return '\x1B[31m'; // Merah
-      case 2:
-        return '\x1B[32m'; // Hijau
-      case 3:
-        return '\x1B[34m'; // Biru
-      default:
-        return '\x1B[0m';
-    }
-  }
-}
+# macOS
+flutter build macos --release
+```
+
+### Debug Mode
+```bash
+flutter run --debug
+```
+
+## 👨‍💻 **Developer**
+**uci88** - Flutter Developer
+
+---
+**© 2026 LogBook App - Aplikasi Catatan Harian** ✨
