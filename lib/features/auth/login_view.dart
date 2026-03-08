@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:logbook_app/features/auth/login_controller.dart';
 import 'package:logbook_app/features/logbook/log_view.dart';
+import 'package:logbook_app/services/access_control_service.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -18,6 +19,7 @@ class _LoginViewState extends State<LoginView> {
   bool _isPasswordHidden = true;
   int _loginAttempts = 0;
   bool _isButtonDisabled = false;
+  String _selectedRole = AccessControlService.roleAnggota; // Default role
 
   void _handleLogin() {
     String username = _userController.text.trim();
@@ -48,9 +50,17 @@ class _LoginViewState extends State<LoginView> {
 
     if (isSuccess) {
       _loginAttempts = 0;
+      // Buat userId dari username (bisa diperbaiki dengan UUID nanti)
+      final userId = username.toLowerCase();
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => LogView(username: username)),
+        MaterialPageRoute(
+          builder: (context) => LogView(
+            username: username,
+            userId: userId,
+            userRole: _selectedRole,
+          ),
+        ),
       );
     } else {
       _loginAttempts++;
@@ -171,6 +181,55 @@ class _LoginViewState extends State<LoginView> {
                       });
                     },
                   ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // ========== ROLE SELECTION DROPDOWN ==========
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF0F6),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: DropdownButton<String>(
+                  value: _selectedRole,
+                  isExpanded: true,
+                  underline: const SizedBox.shrink(),
+                  items: [
+                    DropdownMenuItem(
+                      value: AccessControlService.roleAnggota,
+                      child: Text(
+                        'Anggota',
+                        style: const TextStyle(
+                          color: Color.fromARGB(255, 254, 166, 209),
+                        ),
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: AccessControlService.roleKetua,
+                      child: Text(
+                        'Ketua',
+                        style: const TextStyle(
+                          color: Color.fromARGB(255, 254, 166, 209),
+                        ),
+                      ),
+                    ),
+                    DropdownMenuItem(
+                      value: AccessControlService.roleAsisten,
+                      child: Text(
+                        'Asisten',
+                        style: const TextStyle(
+                          color: Color.fromARGB(255, 254, 166, 209),
+                        ),
+                      ),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedRole = value ?? AccessControlService.roleAnggota;
+                    });
+                  },
                 ),
               ),
               const SizedBox(height: 24),

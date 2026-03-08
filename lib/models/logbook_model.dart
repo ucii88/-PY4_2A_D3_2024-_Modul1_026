@@ -6,7 +6,7 @@ class Logbook {
   final String description;
   final String date;
   final String category;
-  final String username; // 🔥 TAMBAHKAN FIELD USER
+  final String username;
 
   Logbook({
     this.id,
@@ -14,10 +14,9 @@ class Logbook {
     required this.description,
     required this.date,
     this.category = "Pribadi",
-    required this.username, // 🔥 WAJIB ADA
+    required this.username,
   });
 
-  /// Kirim ke MongoDB
   Map<String, dynamic> toMap() {
     return {
       '_id': id,
@@ -25,11 +24,10 @@ class Logbook {
       'description': description,
       'date': date,
       'category': category,
-      'username': username, // 🔥 SIMPAN USER KE DATABASE
+      'username': username,
     };
   }
 
-  /// Ambil dari MongoDB
   factory Logbook.fromMap(Map<String, dynamic> map) {
     return Logbook(
       id: map['_id'] as ObjectId?,
@@ -37,18 +35,17 @@ class Logbook {
       description: map['description'] ?? '',
       date: map['date'] ?? DateTime.now().toString(),
       category: map['category'] ?? 'Pribadi',
-      username: map['username'] ?? '', // 🔥 BACA USER
+      username: map['username'] ?? '',
     );
   }
 
-  /// Bridge dari model lokal ke cloud
   static Logbook fromLogModel({
     ObjectId? id,
     required String title,
     required String description,
     required String date,
     required String category,
-    required String username, // 🔥 TAMBAHKAN
+    required String username,
   }) {
     return Logbook(
       id: id,

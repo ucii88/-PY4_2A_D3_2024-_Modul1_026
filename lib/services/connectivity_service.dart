@@ -21,7 +21,7 @@ class ConnectivityService {
 
     _checkTimer?.cancel();
     _checkTimer = Timer.periodic(
-      const Duration(seconds: 10),
+      const Duration(seconds: 3), // Lebih sering check (3 detik)
       (_) => checkConnectivity(),
     );
 

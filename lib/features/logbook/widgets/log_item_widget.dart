@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/log_model.dart';
 import 'package:intl/intl.dart';
+import 'package:logbook_app/services/access_control_service.dart';
 
 class LogItemCard extends StatelessWidget {
   final LogModel log;
@@ -10,6 +11,8 @@ class LogItemCard extends StatelessWidget {
   final VoidCallback onDelete;
   final Function(DismissDirection)? onDismissed;
   final String Function(String) formatTimestamp;
+  final String userId; // ID pengguna yang sedang login
+  final String userRole; // Role pengguna yang sedang login
 
   const LogItemCard({
     super.key,
@@ -20,6 +23,8 @@ class LogItemCard extends StatelessWidget {
     required this.onDelete,
     this.onDismissed,
     required this.formatTimestamp,
+    required this.userId,
+    required this.userRole,
   });
 
   @override
@@ -37,6 +42,25 @@ class LogItemCard extends StatelessWidget {
         child: const Icon(Icons.delete, color: Colors.white),
       ),
       confirmDismiss: (direction) async {
+        // ========== GATEKEEPER: Cek permission sebelum swipe delete ==========
+        final isOwner = log.authorId == userId;
+        final canDelete = AccessControlService.canPerform(
+          userRole,
+          AccessControlService.actionDelete,
+          isOwner: isOwner,
+        );
+        if (!canDelete) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Anda tidak memiliki izin untuk menghapus catatan ini',
+              ),
+              duration: Duration(seconds: 2),
+              backgroundColor: Colors.red,
+            ),
+          );
+          return false;
+        }
         return await _showDeleteConfirmDialog(context);
       },
       onDismissed: (direction) {
@@ -56,7 +80,7 @@ class LogItemCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: log.cloudId != null
                   ? const Color.fromARGB(255, 76, 175, 80)
-                  : const Color.fromARGB(255, 255, 152, 0),
+                  : const Color.fromARGB(255, 255, 193, 7),
               borderRadius: BorderRadius.circular(8),
             ),
             padding: const EdgeInsets.all(8),
@@ -127,16 +151,49 @@ class LogItemCard extends StatelessWidget {
           trailing: Wrap(
             spacing: 0,
             children: [
-              IconButton(
-                icon: const Icon(Icons.edit),
-                color: Colors.white,
-                onPressed: onEdit,
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete),
-                color: Colors.red,
-                onPressed: onDelete,
-              ),
+              // ========== CONDITIONAL RENDER: Edit Button ==========
+              if (AccessControlService.canPerform(
+                userRole,
+                AccessControlService.actionUpdate,
+                isOwner: log.authorId == userId,
+              ))
+                IconButton(
+                  icon: const Icon(Icons.edit),
+                  color: Colors.white,
+                  onPressed: onEdit,
+                )
+              else
+                // Tampilkan icon placeholder jika tidak punya permission
+                Tooltip(
+                  message: 'Anda tidak bisa mengedit catatan ini',
+                  child: IconButton(
+                    icon: const Icon(Icons.edit),
+                    color: Colors.white30,
+                    onPressed: null,
+                  ),
+                ),
+
+              // ========== CONDITIONAL RENDER: Delete Button ==========
+              if (AccessControlService.canPerform(
+                userRole,
+                AccessControlService.actionDelete,
+                isOwner: log.authorId == userId,
+              ))
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  color: Colors.red,
+                  onPressed: onDelete,
+                )
+              else
+                // Tampilkan icon placeholder jika tidak punya permission
+                Tooltip(
+                  message: 'Anda tidak bisa menghapus catatan ini',
+                  child: IconButton(
+                    icon: const Icon(Icons.delete),
+                    color: const Color.fromARGB(255, 255, 128, 171),
+                    onPressed: null,
+                  ),
+                ),
             ],
           ),
         ),

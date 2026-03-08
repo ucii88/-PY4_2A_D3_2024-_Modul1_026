@@ -14,7 +14,7 @@ Aplikasi mobile untuk mencatat aktivitas harian dengan kategori yang berbeda-bed
 - **Kategori :**
   -  **Pribadi** 
   -  **Pekerjaan** 
-  -  **Urgent** -
+  -  **Urgent** 
 - **Pencarian catatan** berdasarkan kata kunci
 - **Edit & hapus** catatan
 - **Sync dengan cloud** (MongoDB Atlas)

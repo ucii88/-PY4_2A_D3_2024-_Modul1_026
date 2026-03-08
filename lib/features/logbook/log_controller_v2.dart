@@ -13,7 +13,7 @@ class LogController {
   final String currentUsername;
   final String currentUserId;
   final String currentUserRole;
-  final String teamId;
+  final String teamId; // Untuk collaborative filtering
 
   final ValueNotifier<List<LogModel>> logsNotifier = ValueNotifier([]);
   final ValueNotifier<bool> isLoading = ValueNotifier(false);
@@ -42,7 +42,7 @@ class LogController {
         level: 3,
       );
 
-      // Setup background sync listener
+      // ========== SETUP BACKGROUND SYNC LISTENER ==========
       _setupBackgroundSync();
 
       // Load data awal dari Hive
@@ -61,7 +61,7 @@ class LogController {
   /// Langkah 2: Sync dari Cloud di background (non-blocking)
   Future<void> loadLogs(String teamId) async {
     try {
-      // Load dari Hive (INSTAN)
+      // LANGKAH 1: Load dari Hive (INSTAN)
       final hiveData = _hiveBox.values
           .where((log) => log.teamId == teamId)
           .toList();
@@ -74,7 +74,7 @@ class LogController {
         level: 3,
       );
 
-      // Sync dari Cloud (BACKGROUND - Non-blocking)
+      // LANGKAH 2: Sync dari Cloud (BACKGROUND - Non-blocking)
       if (ConnectivityService().hasConnection) {
         _syncFromCloud(teamId);
       } else {
@@ -127,13 +127,8 @@ class LogController {
   }
 
   /// ========== 4.2: ADD DATA (Instant Local + Background Cloud) ==========
-  Future<void> addLog(
-    String title,
-    String desc,
-    String category, {
-    bool isPublic = false,
-  }) async {
-    // Gatekeeper: Permission check
+  Future<void> addLog(String title, String desc, String category) async {
+    // ========== GATEKEEPER: Permission check ==========
     final canCreate = AccessControlService.canPerform(
       currentUserRole,
       AccessControlService.actionCreate,
@@ -149,8 +144,7 @@ class LogController {
       category: category,
       authorId: currentUserId,
       teamId: teamId,
-      id: null,
-      isPublic: isPublic, // Privacy setting
+      id: null, // Akan diisi oleh MongoDB
     );
 
     try {
@@ -159,7 +153,7 @@ class LogController {
       logsNotifier.value = [...logsNotifier.value, newLog];
 
       await LogHelper.writeLog(
-        "SUCCESS: Log '$title' saved locally to Hive (Public: $isPublic)",
+        "SUCCESS: Log '$title' saved locally to Hive",
         source: "log_controller.dart",
         level: 3,
       );
@@ -210,19 +204,22 @@ class LogController {
     int index,
     String newTitle,
     String newDesc,
-    String newCategory, {
-    bool isPublic = false,
-  }) async {
+    String newCategory,
+  ) async {
     final currentLogs = List<LogModel>.from(logsNotifier.value);
     if (index >= currentLogs.length) throw Exception("Invalid index");
 
     final oldLog = currentLogs[index];
 
+    // ========== GATEKEEPER: Permission check ==========
     final isOwner = oldLog.authorId == currentUserId;
-    if (!isOwner) {
-      throw Exception(
-        "Anda tidak bisa mengedit catatan orang lain. Hanya pembuat catatan yang bisa mengedit.",
-      );
+    final canUpdate = AccessControlService.canPerform(
+      currentUserRole,
+      AccessControlService.actionUpdate,
+      isOwner: isOwner,
+    );
+    if (!canUpdate) {
+      throw Exception("Anda tidak memiliki izin untuk mengubah catatan ini");
     }
 
     final updatedLog = LogModel(
@@ -233,8 +230,6 @@ class LogController {
       authorId: oldLog.authorId,
       teamId: oldLog.teamId,
       id: oldLog.id,
-      isPublic: isPublic, // Update privacy setting
-      cloudId: oldLog.cloudId, // Preserve cloud ID
     );
 
     try {
@@ -243,7 +238,7 @@ class LogController {
       logsNotifier.value = currentLogs;
 
       await LogHelper.writeLog(
-        "SUCCESS: Log updated locally (Public: $isPublic)",
+        "SUCCESS: Log updated locally",
         source: "log_controller.dart",
         level: 3,
       );
@@ -291,13 +286,15 @@ class LogController {
 
     final targetLog = currentLogs[index];
 
-    // Task 5: Ownership-based sovereignty check (not role-based)
-    // Only the owner can delete their own logs
+    // ========== GATEKEEPER: Permission check ==========
     final isOwner = targetLog.authorId == currentUserId;
-    if (!isOwner) {
-      throw Exception(
-        "Anda tidak bisa menghapus catatan orang lain. Hanya pembuat catatan yang bisa menghapus.",
-      );
+    final canDelete = AccessControlService.canPerform(
+      currentUserRole,
+      AccessControlService.actionDelete,
+      isOwner: isOwner,
+    );
+    if (!canDelete) {
+      throw Exception("Anda tidak memiliki izin untuk menghapus catatan ini");
     }
 
     try {
@@ -348,6 +345,7 @@ class LogController {
   }
 
   /// ========== 4.3: BACKGROUND SYNC LISTENER ==========
+  /// Dengarkan perubahan koneksi internet dan trigger sync otomatis
   void _setupBackgroundSync() {
     ConnectivityService().isConnected.addListener(() {
       if (ConnectivityService().hasConnection) {

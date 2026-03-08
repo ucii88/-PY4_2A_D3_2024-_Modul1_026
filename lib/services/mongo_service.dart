@@ -1,6 +1,7 @@
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:logbook_app/models/logbook_model.dart';
+import 'package:logbook_app/features/logbook/models/log_model.dart';
 import 'package:logbook_app/helpers/log_helper.dart';
 
 class MongoService {
@@ -220,6 +221,114 @@ class MongoService {
         level: 1,
       );
       rethrow;
+    }
+  }
+
+  // ========== LANGKAH 4: COLLABORATIVE SYNC METHODS ==========
+
+  /// Mendapatkan logs berdasarkan teamId (untuk kolaborasi antar tim)
+  Future<List<LogModel>> getLogsByTeam(String teamId) async {
+    try {
+      final collection = await _getSafeCollection();
+
+      await LogHelper.writeLog(
+        "INFO: Fetching logs for Team: $teamId",
+        source: _source,
+        level: 3,
+      );
+
+      final List<Map<String, dynamic>> data = await collection
+          .find(where.eq('teamId', teamId))
+          .toList();
+
+      final logs = data.map((json) => LogModel.fromMap(json)).toList();
+
+      await LogHelper.writeLog(
+        "SUCCESS: Retrieved ${logs.length} logs for teamId=$teamId",
+        source: _source,
+        level: 2,
+      );
+
+      return logs;
+    } catch (e) {
+      await LogHelper.writeLog(
+        "ERROR: getLogsByTeam failed - $e",
+        source: _source,
+        level: 1,
+      );
+      return [];
+    }
+  }
+
+  /// Insert LogModel ke MongoDB (untuk LogEditorPage create)
+  Future<ObjectId?> insertLogModel(LogModel logModel) async {
+    try {
+      final collection = await _getSafeCollection();
+      final map = logModel.toMap();
+      final result = await collection.insertOne(map);
+
+      await LogHelper.writeLog(
+        "SUCCESS: LogModel '${logModel.title}' inserted to Cloud",
+        source: _source,
+        level: 2,
+      );
+      return result.id as ObjectId;
+    } catch (e) {
+      await LogHelper.writeLog(
+        "ERROR: insertLogModel failed - $e",
+        source: _source,
+        level: 1,
+      );
+      return null;
+    }
+  }
+
+  /// Update LogModel di MongoDB (untuk LogEditorPage edit)
+  Future<bool> updateLogModel(String id, LogModel logModel) async {
+    try {
+      final collection = await _getSafeCollection();
+      final objectId = ObjectId.fromHexString(id);
+      final map = logModel.toMap();
+
+      await collection.replaceOne(where.id(objectId), map);
+
+      await LogHelper.writeLog(
+        "SUCCESS: LogModel '${logModel.title}' updated in Cloud",
+        source: _source,
+        level: 2,
+      );
+      return true;
+    } catch (e) {
+      await LogHelper.writeLog(
+        "ERROR: updateLogModel failed - $e",
+        source: _source,
+        level: 1,
+      );
+      return false;
+    }
+  }
+
+  /// Delete LogModel dari MongoDB
+  Future<bool> deleteLogModel(String id) async {
+    try {
+      final collection = await _getSafeCollection();
+      final objectId = ObjectId.fromHexString(id);
+
+      final result = await collection.deleteOne(where.id(objectId));
+
+      await LogHelper.writeLog(
+        "SUCCESS: LogModel deleted from Cloud",
+        source: _source,
+        level: 2,
+      );
+      return result.ok == 1.0;
+    } catch (e) {
+      await LogHelper.writeLog(
+        "ERROR: deleteLogModel failed - $e",
+        source: _source,
+        level: 1,
+      );
+      return false;
     }
   }
 }
