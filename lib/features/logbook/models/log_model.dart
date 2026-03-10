@@ -32,6 +32,9 @@ class LogModel {
   @HiveField(8)
   final bool isPublic; // Privacy control: true = visible to all, false = only owner
 
+  @HiveField(9)
+  final String syncStatus; // NEW: 'pending', 'synced', 'deleted'
+
   LogModel({
     required this.title,
     required this.date,
@@ -41,7 +44,8 @@ class LogModel {
     required this.authorId,
     required this.teamId,
     this.cloudId,
-    this.isPublic = false, // Default: Private
+    this.isPublic = false,
+    this.syncStatus = 'pending',
   });
 
   // Untuk Tugas HOTS: Konversi Map (JSON) ke Object
@@ -56,6 +60,7 @@ class LogModel {
       teamId: map['teamId'] ?? 'no_team',
       cloudId: map['cloudId'] != null ? ObjectId.parse(map['cloudId']) : null,
       isPublic: map['isPublic'] ?? false, // Default: Private
+      syncStatus: map['syncStatus'] ?? 'synced',
     );
   }
 
@@ -68,7 +73,8 @@ class LogModel {
       'category': category,
       'authorId': authorId,
       'teamId': teamId,
-      'isPublic': isPublic, // Privacy setting
+      'isPublic': isPublic,
+      'syncStatus': syncStatus,
       if (id != null) '_id': ObjectId.fromHexString(id!),
       if (cloudId != null) 'cloudId': cloudId!.oid,
     };

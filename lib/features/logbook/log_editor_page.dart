@@ -258,7 +258,6 @@ class _LogEditorPageState extends State<LogEditorPage> {
           ),
           const SizedBox(height: 12),
 
-          // ========== FIELD: PRIVACY CONTROL ==========
           Container(
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey[300]!),
@@ -294,11 +293,18 @@ class _LogEditorPageState extends State<LogEditorPage> {
               maxLines: null,
               expands: true,
               keyboardType: TextInputType.multiline,
-              style: const TextStyle(fontSize: 14),
+              textAlignVertical: TextAlignVertical.top,
+              style: const TextStyle(fontSize: 14, height: 1.5),
               decoration: InputDecoration(
                 hintText:
-                    "Tulis catatan dengan format Markdown...\n\n# Heading 1\n## Heading 2\n**Bold** | *Italic* | `Code`\n- List item\n1. Numbered item",
-                hintStyle: const TextStyle(color: Colors.grey),
+                    "Tulis catatan di sini...\n(Markdown supported: # Heading, **Bold**, *Italic*, `Code`, - List)",
+                hintMaxLines: 3,
+                hintStyle: const TextStyle(
+                  color: Colors.grey,
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+                contentPadding: const EdgeInsets.all(16),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),

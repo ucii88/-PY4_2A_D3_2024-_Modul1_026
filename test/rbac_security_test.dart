@@ -20,7 +20,6 @@ void main() {
       // User A creates 2 logs: 1 private, 1 public
 
       const userA_Id = 'user_001_alice';
-      const userA_Name = 'Alice';
       const userB_Id = 'user_002_bob';
 
       final privateLogA = LogModel(

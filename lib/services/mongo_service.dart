@@ -283,6 +283,57 @@ class MongoService {
     }
   }
 
+  /// ========== UPSERT METHOD (Recommended untuk Offline-First) ==========
+  /// Implementasi Upsert: Update jika sudah ada (by author+title+teamId), Insert kalau belum
+  /// Ini adalah solusi resmi untuk cegah duplikat sesuai modul praktikum
+  Future<Map<String, dynamic>> upsertLogModel(LogModel logModel) async {
+    try {
+      final collection = await _getSafeCollection();
+
+      // Filter: cari data dengan author+title+teamId yang sama
+      final filter = where
+          .eq('authorId', logModel.authorId)
+          .eq('title', logModel.title)
+          .eq('teamId', logModel.teamId);
+
+      final map = logModel.toMap();
+
+      // Gunakan updateOne dengan upsert:true
+      // Ini berarti: Update jika ada, Insert jika tidak ada
+      await LogHelper.writeLog(
+        "DEBUG: Attempting upsert for '${logModel.title}' (author: ${logModel.authorId})",
+        source: _source,
+        level: 3,
+      );
+
+      final result = await collection.updateOne(
+        filter,
+        {r'$set': map},
+        upsert: true, // ← Ini adalah "magic" untuk cegah duplikat!
+      );
+
+      await LogHelper.writeLog(
+        "SUCCESS: Upsert completed - matched: ${result.nMatched}, modified: ${result.nModified}, upserted: ${result.nUpserted}",
+        source: _source,
+        level: 2,
+      );
+
+      return {
+        'success': true,
+        'matched': result.nMatched,
+        'modified': result.nModified,
+        'upserted': result.nUpserted,
+      };
+    } catch (e) {
+      await LogHelper.writeLog(
+        "ERROR: upsertLogModel failed - $e",
+        source: _source,
+        level: 1,
+      );
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
   /// Update LogModel di MongoDB (untuk LogEditorPage edit)
   Future<bool> updateLogModel(String id, LogModel logModel) async {
     try {
@@ -325,6 +376,54 @@ class MongoService {
     } catch (e) {
       await LogHelper.writeLog(
         "ERROR: deleteLogModel failed - $e",
+        source: _source,
+        level: 1,
+      );
+      return false;
+    }
+  }
+
+  /// Update LogModel by cloudId (untuk sync offline changes)
+  Future<bool> updateLogByCloudId(ObjectId cloudId, LogModel logModel) async {
+    try {
+      final collection = await _getSafeCollection();
+      final map = logModel.toMap();
+
+      // Update dengan _id = cloudId
+      await collection.replaceOne(where.id(cloudId), map);
+
+      await LogHelper.writeLog(
+        "SUCCESS: LogModel '${logModel.title}' synced to Cloud (cloudId: ${cloudId.oid})",
+        source: _source,
+        level: 2,
+      );
+      return true;
+    } catch (e) {
+      await LogHelper.writeLog(
+        "ERROR: updateLogByCloudId failed - $e",
+        source: _source,
+        level: 1,
+      );
+      return false;
+    }
+  }
+
+  /// Delete LogModel by cloudId (untuk sync offline deletions)
+  Future<bool> deleteLogByCloudId(ObjectId cloudId) async {
+    try {
+      final collection = await _getSafeCollection();
+
+      final result = await collection.deleteOne(where.id(cloudId));
+
+      await LogHelper.writeLog(
+        "SUCCESS: LogModel deleted from Cloud (cloudId: ${cloudId.oid})",
+        source: _source,
+        level: 2,
+      );
+      return result.ok == 1.0;
+    } catch (e) {
+      await LogHelper.writeLog(
+        "ERROR: deleteLogByCloudId failed - $e",
         source: _source,
         level: 1,
       );

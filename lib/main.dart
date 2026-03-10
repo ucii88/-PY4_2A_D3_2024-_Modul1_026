@@ -19,10 +19,38 @@ void main() async {
     await dotenv.load(fileName: ".env");
     print('✅ [main] .env file loaded');
 
-    // INISIALISASI HIVE
+    // INISIALISASI HIVE - STRICT ERROR HANDLING
+    print('[main] Starting Hive initialization...');
+
     await Hive.initFlutter();
+    print('✅ [main] Hive.initFlutter() completed');
+
+    print('[main] Registering LogModelAdapter...');
     Hive.registerAdapter(LogModelAdapter());
-    await Hive.openBox<LogModel>('offline_logs');
+    print('✅ [main] LogModelAdapter registered');
+
+    print('[main] Opening offline_logs box...');
+    try {
+      await Hive.openBox<LogModel>('offline_logs');
+      print('✅ [main] Hive.openBox("offline_logs") completed');
+    } catch (e) {
+      print(
+        '⚠️ [main] Box corrupted or incompatible, clearing and recreating...',
+      );
+      try {
+        await Hive.deleteBoxFromDisk('offline_logs');
+        print('✅ [main] Deleted corrupted box from disk');
+      } catch (deleteError) {
+        print(
+          '⚠️ [main] Could not delete box: $deleteError, attempting to open anyway...',
+        );
+      }
+      // Wait a moment before retrying
+      await Future.delayed(const Duration(milliseconds: 500));
+      await Hive.openBox<LogModel>('offline_logs');
+      print('✅ [main] Hive box opened/recreated');
+    }
+
     print('✅ [main] Hive initialized with offline_logs box');
 
     await LogHelper.initialize();
@@ -30,8 +58,10 @@ void main() async {
 
     await MongoService().connect();
     print('✅ [main] MongoDB connected');
-  } catch (e) {
+  } catch (e, stackTrace) {
     print('❌ [main] Initialization failed: $e');
+    print('❌ [main] Stack trace: $stackTrace');
+    rethrow; // Let error propagate so we can see it
   }
 
   runApp(const MyApp());

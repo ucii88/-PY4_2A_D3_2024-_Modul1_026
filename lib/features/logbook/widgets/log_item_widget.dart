@@ -11,8 +11,8 @@ class LogItemCard extends StatelessWidget {
   final VoidCallback onDelete;
   final Function(DismissDirection)? onDismissed;
   final String Function(String) formatTimestamp;
-  final String userId; // ID pengguna yang sedang login
-  final String userRole; // Role pengguna yang sedang login
+  final String userId;
+  final String userRole;
 
   const LogItemCard({
     super.key,
@@ -42,7 +42,6 @@ class LogItemCard extends StatelessWidget {
         child: const Icon(Icons.delete, color: Colors.white),
       ),
       confirmDismiss: (direction) async {
-        // ========== GATEKEEPER: Cek permission sebelum swipe delete ==========
         final isOwner = log.authorId == userId;
         final canDelete = AccessControlService.canPerform(
           userRole,
@@ -151,7 +150,6 @@ class LogItemCard extends StatelessWidget {
           trailing: Wrap(
             spacing: 0,
             children: [
-              // ========== CONDITIONAL RENDER: Edit Button ==========
               if (AccessControlService.canPerform(
                 userRole,
                 AccessControlService.actionUpdate,
@@ -163,7 +161,6 @@ class LogItemCard extends StatelessWidget {
                   onPressed: onEdit,
                 )
               else
-                // Tampilkan icon placeholder jika tidak punya permission
                 Tooltip(
                   message: 'Anda tidak bisa mengedit catatan ini',
                   child: IconButton(
@@ -173,7 +170,6 @@ class LogItemCard extends StatelessWidget {
                   ),
                 ),
 
-              // ========== CONDITIONAL RENDER: Delete Button ==========
               if (AccessControlService.canPerform(
                 userRole,
                 AccessControlService.actionDelete,
@@ -185,7 +181,6 @@ class LogItemCard extends StatelessWidget {
                   onPressed: onDelete,
                 )
               else
-                // Tampilkan icon placeholder jika tidak punya permission
                 Tooltip(
                   message: 'Anda tidak bisa menghapus catatan ini',
                   child: IconButton(
@@ -237,17 +232,15 @@ Color getCategoryColor(String category) {
 Color getCategoryBackgroundColor(String category) {
   switch (category) {
     case "Pekerjaan":
-      return const Color.fromARGB(255, 240, 250, 255); // Biru sangat lembut
+      return const Color.fromARGB(255, 240, 250, 255);
     case "Urgent":
-      return const Color.fromARGB(255, 255, 245, 245); // Merah sangat lembut
+      return const Color.fromARGB(255, 255, 245, 245);
     case "Pribadi":
     default:
-      return const Color.fromARGB(255, 252, 240, 248); // Pink sangat lembut
+      return const Color.fromARGB(255, 252, 240, 248);
   }
 }
 
-/// atau absolute format (e.g., "25 Januari 2026")
-/// Menggunakan intl library untuk lokalisasi Indonesia
 String formatTimestamp(String dateString) {
   try {
     DateTime parsedDate = DateTime.parse(dateString);

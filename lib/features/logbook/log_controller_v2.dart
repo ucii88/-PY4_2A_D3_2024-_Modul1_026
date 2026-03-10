@@ -7,13 +7,11 @@ import 'package:logbook_app/services/access_control_service.dart';
 import 'package:logbook_app/helpers/log_helper.dart';
 import 'models/log_model.dart';
 
-/// LogController V2: Offline-First Sync Strategy
-/// Menggunakan Hive untuk penyimpanan lokal instan & MongoDB untuk cloud backup
 class LogController {
   final String currentUsername;
   final String currentUserId;
   final String currentUserRole;
-  final String teamId; // Untuk collaborative filtering
+  final String teamId;
 
   final ValueNotifier<List<LogModel>> logsNotifier = ValueNotifier([]);
   final ValueNotifier<bool> isLoading = ValueNotifier(false);
@@ -32,7 +30,6 @@ class LogController {
     _initialize();
   }
 
-  /// Inisialisasi Hive box dan setup background sync listener
   Future<void> _initialize() async {
     try {
       _hiveBox = Hive.box<LogModel>('offline_logs');
@@ -42,10 +39,8 @@ class LogController {
         level: 3,
       );
 
-      // ========== SETUP BACKGROUND SYNC LISTENER ==========
       _setupBackgroundSync();
 
-      // Load data awal dari Hive
       await loadLogs(teamId);
     } catch (e) {
       await LogHelper.writeLog(
@@ -56,12 +51,8 @@ class LogController {
     }
   }
 
-  /// ========== 4.2: LOAD DATA (Offline-First Strategy) ==========
-  /// Langkah 1: Ambil data dari Hive (sangat cepat/instan)
-  /// Langkah 2: Sync dari Cloud di background (non-blocking)
   Future<void> loadLogs(String teamId) async {
     try {
-      // LANGKAH 1: Load dari Hive (INSTAN)
       final hiveData = _hiveBox.values
           .where((log) => log.teamId == teamId)
           .toList();
@@ -74,7 +65,6 @@ class LogController {
         level: 3,
       );
 
-      // LANGKAH 2: Sync dari Cloud (BACKGROUND - Non-blocking)
       if (ConnectivityService().hasConnection) {
         _syncFromCloud(teamId);
       } else {
@@ -94,20 +84,17 @@ class LogController {
     }
   }
 
-  /// Sync data dari Cloud ke Hive
   Future<void> _syncFromCloud(String teamId) async {
     try {
       isLoading.value = true;
 
       final cloudData = await _mongoService.getLogsByTeam(teamId);
 
-      // Update Hive dengan data cloud
       await _hiveBox.clear();
       for (var log in cloudData) {
         await _hiveBox.add(log);
       }
 
-      // Update UI dengan data cloud
       logsNotifier.value = cloudData;
 
       await LogHelper.writeLog(
@@ -126,9 +113,7 @@ class LogController {
     }
   }
 
-  /// ========== 4.2: ADD DATA (Instant Local + Background Cloud) ==========
   Future<void> addLog(String title, String desc, String category) async {
-    // ========== GATEKEEPER: Permission check ==========
     final canCreate = AccessControlService.canPerform(
       currentUserRole,
       AccessControlService.actionCreate,
@@ -144,11 +129,10 @@ class LogController {
       category: category,
       authorId: currentUserId,
       teamId: teamId,
-      id: null, // Akan diisi oleh MongoDB
+      id: null,
     );
 
     try {
-      // ACTION 1: Simpan ke Hive (INSTAN)
       await _hiveBox.add(newLog);
       logsNotifier.value = [...logsNotifier.value, newLog];
 
@@ -158,7 +142,6 @@ class LogController {
         level: 3,
       );
 
-      // ACTION 2: Kirim ke MongoDB (BACKGROUND - Non-blocking)
       _uploadToCloud(newLog);
     } catch (e) {
       await LogHelper.writeLog(
@@ -170,7 +153,6 @@ class LogController {
     }
   }
 
-  /// Upload log ke MongoDB di background
   Future<void> _uploadToCloud(LogModel log) async {
     try {
       if (!ConnectivityService().hasConnection) {
@@ -199,7 +181,6 @@ class LogController {
     }
   }
 
-  /// ========== UPDATE LOG ==========
   Future<void> updateLog(
     int index,
     String newTitle,
@@ -211,7 +192,6 @@ class LogController {
 
     final oldLog = currentLogs[index];
 
-    // ========== GATEKEEPER: Permission check ==========
     final isOwner = oldLog.authorId == currentUserId;
     final canUpdate = AccessControlService.canPerform(
       currentUserRole,
@@ -233,7 +213,6 @@ class LogController {
     );
 
     try {
-      // ACTION 1: Update Hive
       currentLogs[index] = updatedLog;
       logsNotifier.value = currentLogs;
 
@@ -243,7 +222,6 @@ class LogController {
         level: 3,
       );
 
-      // ACTION 2: Update Cloud (background)
       if (oldLog.id != null) {
         _updateCloud(oldLog.id!, updatedLog);
       }
@@ -257,7 +235,6 @@ class LogController {
     }
   }
 
-  /// Update log di MongoDB
   Future<void> _updateCloud(String id, LogModel log) async {
     try {
       if (!ConnectivityService().hasConnection) return;
@@ -279,14 +256,12 @@ class LogController {
     }
   }
 
-  /// ========== DELETE LOG ==========
   Future<void> removeLog(int index) async {
     final currentLogs = List<LogModel>.from(logsNotifier.value);
     if (index >= currentLogs.length) throw Exception("Invalid index");
 
     final targetLog = currentLogs[index];
 
-    // ========== GATEKEEPER: Permission check ==========
     final isOwner = targetLog.authorId == currentUserId;
     final canDelete = AccessControlService.canPerform(
       currentUserRole,
@@ -298,11 +273,9 @@ class LogController {
     }
 
     try {
-      // ACTION 1: Remove dari Hive
       currentLogs.removeAt(index);
       logsNotifier.value = currentLogs;
 
-      // ACTION 2: Remove dari Cloud (background)
       if (targetLog.id != null) {
         _deleteFromCloud(targetLog.id!);
       }
@@ -322,7 +295,6 @@ class LogController {
     }
   }
 
-  /// Delete log dari MongoDB
   Future<void> _deleteFromCloud(String id) async {
     try {
       if (!ConnectivityService().hasConnection) return;
@@ -344,8 +316,6 @@ class LogController {
     }
   }
 
-  /// ========== 4.3: BACKGROUND SYNC LISTENER ==========
-  /// Dengarkan perubahan koneksi internet dan trigger sync otomatis
   void _setupBackgroundSync() {
     ConnectivityService().isConnected.addListener(() {
       if (ConnectivityService().hasConnection) {
@@ -358,7 +328,6 @@ class LogController {
       }
     });
 
-    // Periodic sync setiap 5 menit jika online
     _syncTimer = Timer.periodic(const Duration(minutes: 5), (_) {
       if (ConnectivityService().hasConnection) {
         _syncFromCloud(teamId);
@@ -366,7 +335,6 @@ class LogController {
     });
   }
 
-  /// Cleanup resources
   Future<void> dispose() async {
     _syncTimer?.cancel();
     await LogHelper.writeLog(
