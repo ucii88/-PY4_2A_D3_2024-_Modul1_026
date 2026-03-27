@@ -31,7 +31,7 @@ class ConnectivityService {
     // onConnectivityChanged mengembalikan List<ConnectivityResult>
     // Listener ini dipanggil SETIAP kali ada perubahan WiFi/Cellular
     _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
-      List<ConnectivityResult> results,
+      results,
     ) {
       // Cek apakah ada WiFi atau Cellular (exclude none)
       final hasConnection = results.any(

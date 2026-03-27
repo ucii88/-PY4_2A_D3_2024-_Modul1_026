@@ -39,15 +39,14 @@ class AccessControlService {
     bool hasBasicPermission = permissions.contains(action);
 
     // ========== OWNERSHIP-BASED LOGIC ==========
-    // Anggota hanya bisa update/delete jika mereka adalah pemilik data
-    if (role == roleAnggota &&
-        (action == actionUpdate || action == actionDelete)) {
+    // DELETE: Hanya pemilik yang bisa delete (berlaku untuk semua role)
+    if (action == actionDelete) {
       return isOwner;
     }
 
-    // Asisten hanya bisa read, tidak boleh delete
-    if (role == roleAsisten && action == actionDelete) {
-      return false;
+    // UPDATE: Anggota hanya bisa update jika mereka adalah pemilik data
+    if (role == roleAnggota && action == actionUpdate) {
+      return isOwner;
     }
 
     // Aksi lain mengikuti permission matrix

@@ -75,14 +75,21 @@ class _LogViewState extends State<LogView> {
     }
   }
 
+  // ========== HOMEWORK 3: CATEGORIZATION & COLOR CODING ==========
+  // Implementasi warna indikator berbeda berdasarkan kategori log
+  // - Mechanical (Mekanik) → Hijau
+  // - Electronic (Elektronik) → Biru
+  // - Software → Oranye/Amber
   Color _getCategoryColor(String category) {
     switch (category) {
-      case "Pekerjaan":
-        return const Color.fromARGB(255, 246, 148, 191);
-      case "Urgent":
-        return const Color.fromARGB(255, 232, 94, 145);
+      case "Mechanical":
+        return const Color.fromARGB(255, 138, 199, 140); // Hijau
+      case "Electronic":
+        return const Color.fromARGB(255, 111, 175, 227); // Biru
+      case "Software":
+        return const Color.fromARGB(255, 229, 129, 63); // Oranye
       default:
-        return const Color.fromARGB(255, 248, 198, 222);
+        return const Color.fromARGB(255, 158, 158, 158); // Abu-abu fallback
     }
   }
 
@@ -638,7 +645,12 @@ class _LogViewState extends State<LogView> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    color: _getCategoryColor(log.category),
+                                    color: const Color.fromARGB(
+                                      255,
+                                      246,
+                                      180,
+                                      212,
+                                    ),
                                     child: ListTile(
                                       contentPadding: const EdgeInsets.all(16),
                                       // ========== SYNC STATUS INDICATOR (Modul Langkah 4) ==========
@@ -730,8 +742,9 @@ class _LogViewState extends State<LogView> {
                                                       vertical: 2,
                                                     ),
                                                 decoration: BoxDecoration(
-                                                  color: Colors.black
-                                                      .withOpacity(0.3),
+                                                  color: _getCategoryColor(
+                                                    log.category,
+                                                  ),
                                                   borderRadius:
                                                       BorderRadius.circular(4),
                                                 ),
@@ -881,7 +894,7 @@ class _LogViewState extends State<LogView> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text(
-                      '📝 Catatan akan disimpan lokal. Sync otomatis saat online.',
+                      ' Catatan akan disimpan lokal. Sync otomatis saat online.',
                     ),
                     backgroundColor: Colors.blue,
                     duration: Duration(seconds: 2),

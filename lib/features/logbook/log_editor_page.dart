@@ -41,7 +41,7 @@ class _LogEditorPageState extends State<LogEditorPage> {
       text: widget.log?.description ?? '',
     );
     _categoryController = TextEditingController(
-      text: widget.log?.category ?? 'Pribadi',
+      text: widget.log?.category ?? 'Mechanical',
     );
     _isPublic = widget.log?.isPublic ?? false; // Initialize from existing log
 
@@ -93,7 +93,7 @@ class _LogEditorPageState extends State<LogEditorPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('✅ Catatan berhasil disimpan'),
+              content: Text(' Catatan berhasil disimpan'),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 2),
             ),
@@ -113,7 +113,7 @@ class _LogEditorPageState extends State<LogEditorPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('✅ Catatan berhasil diupdate'),
+              content: Text(' Catatan berhasil diupdate'),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 2),
             ),
@@ -139,6 +139,20 @@ class _LogEditorPageState extends State<LogEditorPage> {
     _descController.dispose();
     _categoryController.dispose();
     super.dispose();
+  }
+
+  /// Helper: Ambil warna berdasarkan kategori
+  Color _getCategoryColor(String category) {
+    switch (category) {
+      case "Mechanical":
+        return const Color.fromARGB(255, 138, 199, 140); // Hijau
+      case "Electronic":
+        return const Color.fromARGB(255, 111, 175, 227); // Biru
+      case "Software":
+        return const Color.fromARGB(255, 224, 146, 94); // Oranye
+      default:
+        return const Color.fromARGB(255, 158, 158, 158); // Abu-abu fallback
+    }
   }
 
   @override
@@ -231,13 +245,20 @@ class _LogEditorPageState extends State<LogEditorPage> {
           ),
           const SizedBox(height: 12),
 
-          // ========== FIELD: CATEGORY ==========
+          // ========== FIELD: CATEGORY (Homework 3: Categorization & Color Coding) ==========
           DropdownButtonFormField<String>(
-            initialValue: _categoryController.text.isEmpty
-                ? 'Pribadi'
-                : _categoryController.text,
+            isExpanded: true,
+            initialValue:
+                [
+                  'Mechanical',
+                  'Electronic',
+                  'Software',
+                ].contains(_categoryController.text)
+                ? _categoryController.text
+                : 'Mechanical',
             decoration: InputDecoration(
-              labelText: "Kategori",
+              labelText: "Kategori Teknis",
+              hintText: "Pilih kategori: Mechanical, Electronic, atau Software",
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -249,11 +270,11 @@ class _LogEditorPageState extends State<LogEditorPage> {
                 ),
               ),
             ),
-            items: ['Pribadi', 'Pekerjaan', 'Urgent']
+            items: ['Mechanical', 'Electronic', 'Software']
                 .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
                 .toList(),
             onChanged: (value) {
-              _categoryController.text = value ?? 'Pribadi';
+              _categoryController.text = value ?? 'Mechanical';
             },
           ),
           const SizedBox(height: 12),
@@ -270,8 +291,8 @@ class _LogEditorPageState extends State<LogEditorPage> {
               ),
               subtitle: Text(
                 _isPublic
-                    ? "🌐 Publik (Semua bisa lihat)"
-                    : "🔒 Privat (Hanya kamu yang lihat)",
+                    ? " Publik (Semua bisa lihat)"
+                    : " Privat (Hanya kamu yang lihat)",
               ),
               trailing: Switch(
                 value: _isPublic,
@@ -353,7 +374,7 @@ class _LogEditorPageState extends State<LogEditorPage> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 254, 166, 209),
+                  color: _getCategoryColor(_categoryController.text),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(

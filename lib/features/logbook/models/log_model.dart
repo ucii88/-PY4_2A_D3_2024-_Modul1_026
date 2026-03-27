@@ -39,7 +39,7 @@ class LogModel {
     required this.title,
     required this.date,
     required this.description,
-    this.category = "Pribadi",
+    this.category = "Mechanical", // Default kategori Mechanical
     this.id,
     required this.authorId,
     required this.teamId,
