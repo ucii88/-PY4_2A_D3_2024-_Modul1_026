@@ -166,7 +166,7 @@ class LogHelper {
   static String _getColor(int level) {
     switch (level) {
       case 1:
-        return '\x1B[31m'; // Merah
+        return '\x1B[31m';
       case 2:
         return '\x1B[32m'; // Hijau
       case 3:

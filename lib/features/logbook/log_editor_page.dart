@@ -3,13 +3,12 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'models/log_model.dart';
 import 'log_controller.dart';
 
-/// Halaman editor full-page untuk membuat/mengedit catatan dengan Markdown support
 class LogEditorPage extends StatefulWidget {
-  final LogModel? log; // Jika null = Create, jika ada = Edit
-  final int? index; // Index di list (hanya untuk update)
+  final LogModel? log;
+  final int? index;
   final LogController controller;
-  final String userId; // ID pengguna yang sedang login
-  final String userRole; // Role untuk RBAC check
+  final String userId;
+  final String userRole;
 
   const LogEditorPage({
     super.key,
@@ -29,13 +28,11 @@ class _LogEditorPageState extends State<LogEditorPage> {
   late TextEditingController _descController;
   late TextEditingController _categoryController;
   bool _isSaving = false;
-  bool _isPublic =
-      false; // Privacy control: false = Private (default), true = Public
+  bool _isPublic = false;
 
   @override
   void initState() {
     super.initState();
-    // ========== INISIALISASI CONTROLLER DENGAN DATA EXISTING ==========
     _titleController = TextEditingController(text: widget.log?.title ?? '');
     _descController = TextEditingController(
       text: widget.log?.description ?? '',
@@ -43,9 +40,8 @@ class _LogEditorPageState extends State<LogEditorPage> {
     _categoryController = TextEditingController(
       text: widget.log?.category ?? 'Mechanical',
     );
-    _isPublic = widget.log?.isPublic ?? false; // Initialize from existing log
+    _isPublic = widget.log?.isPublic ?? false;
 
-    // Listener untuk real-time update preview
     _descController.addListener(() {
       setState(() {});
     });
@@ -55,7 +51,6 @@ class _LogEditorPageState extends State<LogEditorPage> {
     });
   }
 
-  /// Simpan catatan (Create atau Update)
   Future<void> _save() async {
     // Validasi input
     if (_titleController.text.isEmpty) {
@@ -82,7 +77,6 @@ class _LogEditorPageState extends State<LogEditorPage> {
 
     try {
       if (widget.log == null) {
-        // ========== CREATE LOG BARU ==========
         await widget.controller.addLog(
           _titleController.text,
           _descController.text,
@@ -101,7 +95,6 @@ class _LogEditorPageState extends State<LogEditorPage> {
           Navigator.pop(context);
         }
       } else {
-        // ========== UPDATE LOG EXISTING ==========
         await widget.controller.updateLog(
           widget.index!,
           _titleController.text,
@@ -134,24 +127,22 @@ class _LogEditorPageState extends State<LogEditorPage> {
 
   @override
   void dispose() {
-    // ========== CLEANUP CONTROLLER UNTUK PREVENT MEMORY LEAK ==========
     _titleController.dispose();
     _descController.dispose();
     _categoryController.dispose();
     super.dispose();
   }
 
-  /// Helper: Ambil warna berdasarkan kategori
   Color _getCategoryColor(String category) {
     switch (category) {
       case "Mechanical":
-        return const Color.fromARGB(255, 138, 199, 140); // Hijau
+        return const Color.fromARGB(255, 138, 199, 140);
       case "Electronic":
-        return const Color.fromARGB(255, 111, 175, 227); // Biru
+        return const Color.fromARGB(255, 111, 175, 227);
       case "Software":
-        return const Color.fromARGB(255, 224, 146, 94); // Oranye
+        return const Color.fromARGB(255, 224, 146, 94);
       default:
-        return const Color.fromARGB(255, 158, 158, 158); // Abu-abu fallback
+        return const Color.fromARGB(255, 158, 158, 158);
     }
   }
 
@@ -205,26 +196,16 @@ class _LogEditorPageState extends State<LogEditorPage> {
             ),
           ],
         ),
-        body: TabBarView(
-          children: [
-            // ========== TAB 1: EDITOR ==========
-            _buildEditorTab(),
-
-            // ========== TAB 2: MARKDOWN PREVIEW ==========
-            _buildPreviewTab(),
-          ],
-        ),
+        body: TabBarView(children: [_buildEditorTab(), _buildPreviewTab()]),
       ),
     );
   }
 
-  /// Widget Tab Editor dengan TextField untuk Title, Category, dan Description
   Widget _buildEditorTab() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         children: [
-          // ========== FIELD: TITLE ==========
           TextField(
             controller: _titleController,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -245,7 +226,6 @@ class _LogEditorPageState extends State<LogEditorPage> {
           ),
           const SizedBox(height: 12),
 
-          // ========== FIELD: CATEGORY (Homework 3: Categorization & Color Coding) ==========
           DropdownButtonFormField<String>(
             isExpanded: true,
             initialValue:
@@ -307,7 +287,6 @@ class _LogEditorPageState extends State<LogEditorPage> {
           ),
           const SizedBox(height: 12),
 
-          // ========== FIELD: DESCRIPTION (MARKDOWN) ==========
           Expanded(
             child: TextField(
               controller: _descController,
@@ -344,14 +323,12 @@ class _LogEditorPageState extends State<LogEditorPage> {
     );
   }
 
-  /// Widget Tab Pratinjau Markdown
   Widget _buildPreviewTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ========== PREVIEW: TITLE ==========
           if (_titleController.text.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
@@ -364,7 +341,6 @@ class _LogEditorPageState extends State<LogEditorPage> {
               ),
             ),
 
-          // ========== PREVIEW: CATEGORY BADGE ==========
           if (_categoryController.text.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 12.0),
@@ -388,7 +364,6 @@ class _LogEditorPageState extends State<LogEditorPage> {
               ),
             ),
 
-          // ========== PREVIEW: MARKDOWN CONTENT ==========
           if (_descController.text.isEmpty)
             Center(
               child: Padding(

@@ -18,28 +18,28 @@ class LogModel {
   final String category;
 
   @HiveField(4)
-  final String? id; // Untuk penyimpanan ID MongoDB
+  final String? id;
 
   @HiveField(5)
-  final String authorId; // BARU: ID pembuat logbook
+  final String authorId;
 
   @HiveField(6)
-  final String teamId; // BARU: ID tim (untuk kolaborasi)
+  final String teamId;
 
   @HiveField(7)
-  final ObjectId? cloudId; // Untuk sinkronisasi dengan cloud
+  final ObjectId? cloudId;
 
   @HiveField(8)
-  final bool isPublic; // Privacy control: true = visible to all, false = only owner
+  final bool isPublic;
 
   @HiveField(9)
-  final String syncStatus; // NEW: 'pending', 'synced', 'deleted'
+  final String syncStatus;
 
   LogModel({
     required this.title,
     required this.date,
     required this.description,
-    this.category = "Mechanical", // Default kategori Mechanical
+    this.category = "Mechanical",
     this.id,
     required this.authorId,
     required this.teamId,
@@ -48,7 +48,6 @@ class LogModel {
     this.syncStatus = 'pending',
   });
 
-  // Untuk Tugas HOTS: Konversi Map (JSON) ke Object
   factory LogModel.fromMap(Map<String, dynamic> map) {
     return LogModel(
       title: map['title'] ?? '',
@@ -59,12 +58,11 @@ class LogModel {
       authorId: map['authorId'] ?? 'unknown_user',
       teamId: map['teamId'] ?? 'no_team',
       cloudId: map['cloudId'] != null ? ObjectId.parse(map['cloudId']) : null,
-      isPublic: map['isPublic'] ?? false, // Default: Private
+      isPublic: map['isPublic'] ?? false,
       syncStatus: map['syncStatus'] ?? 'synced',
     );
   }
 
-  // Konversi Object ke Map (JSON) untuk disimpan
   Map<String, dynamic> toMap() {
     return {
       'title': title,

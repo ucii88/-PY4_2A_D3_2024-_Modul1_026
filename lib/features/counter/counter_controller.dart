@@ -8,10 +8,13 @@ class CounterController {
   final List<String> _history = [];
 
   int get value => _counter;
+  int get step => _step;
   List<String> get history => _history;
 
   void setStep(int step) {
-    _step = step;
+    if (step > 0) {
+      _step = step;
+    }
   }
 
   Future<void> loadData(String username) async {
@@ -26,6 +29,9 @@ class CounterController {
       _history.addAll(decoded.cast<String>());
     }
   }
+
+  // Alias for loadData to support test naming convention
+  Future<void> loadCounter(String username) => loadData(username);
 
   Future<void> _saveData(String username) async {
     final prefs = await SharedPreferences.getInstance();

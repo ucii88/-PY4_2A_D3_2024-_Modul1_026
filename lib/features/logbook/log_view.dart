@@ -3,6 +3,7 @@ import 'log_controller.dart';
 import 'log_editor_page.dart';
 import 'models/log_model.dart';
 import 'package:logbook_app/features/onboarding/onboarding_view.dart';
+import 'package:logbook_app/features/vision/vision_view.dart';
 import 'package:intl/intl.dart';
 import 'package:logbook_app/services/access_control_service.dart';
 import 'package:logbook_app/services/connectivity_service.dart';
@@ -75,11 +76,6 @@ class _LogViewState extends State<LogView> {
     }
   }
 
-  // ========== HOMEWORK 3: CATEGORIZATION & COLOR CODING ==========
-  // Implementasi warna indikator berbeda berdasarkan kategori log
-  // - Mechanical (Mekanik) → Hijau
-  // - Electronic (Elektronik) → Biru
-  // - Software → Oranye/Amber
   Color _getCategoryColor(String category) {
     switch (category) {
       case "Mechanical":
@@ -94,21 +90,13 @@ class _LogViewState extends State<LogView> {
   }
 
   String _stripMarkdown(String text) {
-    // Remove # headings
     text = text.replaceAll(RegExp(r'^#+\s+', multiLine: true), '');
-    // Remove **bold**
     text = text.replaceAll(RegExp(r'\*\*(.+?)\*\*'), '\$1');
-    // Remove *italic*
     text = text.replaceAll(RegExp(r'\*(.+?)\*'), '\$1');
-    // Remove __bold__
     text = text.replaceAll(RegExp(r'__(.+?)__'), '\$1');
-    // Remove _italic_
     text = text.replaceAll(RegExp(r'_(.+?)_'), '\$1');
-    // Remove `code`
     text = text.replaceAll(RegExp(r'`(.+?)`'), '\$1');
-    // Remove [link](url)
     text = text.replaceAll(RegExp(r'\[(.+?)\]\(.+?\)'), '\$1');
-    // Remove list markers
     text = text.replaceAll(RegExp(r'^\s*[-*+]\s+', multiLine: true), '');
     text = text.replaceAll(RegExp(r'^\s*\d+\.\s+', multiLine: true), '');
     return text.trim();
@@ -174,9 +162,6 @@ class _LogViewState extends State<LogView> {
     );
   }
 
-  /// ========== Network Connectivity Awareness ==========
-  /// Menampilkan status jaringan real-time: WiFi/Cellular available atau tidak
-  /// Menggunakan active listener dari connectivity_plus package
   Widget _buildNetworkStatusIndicator() {
     return ValueListenableBuilder<bool>(
       valueListenable: ConnectivityService().isConnected,
@@ -278,7 +263,6 @@ class _LogViewState extends State<LogView> {
                     }
                   },
           ),
-          // ========== POPUP MENU: Cleanup & More Options ==========
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             itemBuilder: (context) => [
@@ -291,7 +275,6 @@ class _LogViewState extends State<LogView> {
                   ],
                 ),
                 onTap: () async {
-                  // Show confirmation dialog
                   final confirmed = await showDialog<bool>(
                     context: context,
                     builder: (context) => AlertDialog(
@@ -327,7 +310,7 @@ class _LogViewState extends State<LogView> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
-                                '✅ Cleanup selesai! Duplikat dihapus.',
+                                ' Cleanup selesai! Duplikat dihapus.',
                               ),
                               backgroundColor: Colors.green,
                             ),
@@ -470,26 +453,19 @@ class _LogViewState extends State<LogView> {
           return ValueListenableBuilder<List<LogModel>>(
             valueListenable: _controller.filteredLogsNotifier,
             builder: (context, filteredLogs, _) {
-              // Apply visibility filter on already-filtered logs
-              // Task 5: Filter logs based on visibility
-              // Show: (own logs) OR (public logs from others)
               var displayLogs = filteredLogs.where((log) {
                 final isOwner = log.authorId == widget.userId;
                 return isOwner || log.isPublic == true;
               }).toList();
 
-              // Get current search query from controller
               final searchQuery = _controller.searchQueryNotifier.value;
 
-              /// Conditional Rendering: Check if logs are empty
               return displayLogs.isEmpty
                   ? (searchQuery.isEmpty
-                        // Empty state: No logs at all
                         ? EmptyStateWidget.noLogs(
                             onCreateLog: () => _goToEditor(),
                             primaryColor: primaryColor,
                           )
-                        // Empty state: Search results not found
                         : EmptyStateWidget.noSearchResults(
                             searchQuery: searchQuery,
                             onClearSearch: () {
@@ -506,7 +482,6 @@ class _LogViewState extends State<LogView> {
                       backgroundColor: Colors.white,
                       child: Column(
                         children: [
-                          // Search Bar
                           Padding(
                             padding: const EdgeInsets.all(12),
                             child: TextField(
@@ -545,7 +520,6 @@ class _LogViewState extends State<LogView> {
                               ),
                             ),
                           ),
-                          // Logs List
                           Expanded(
                             child: ListView.builder(
                               padding: const EdgeInsets.all(12),
@@ -564,7 +538,6 @@ class _LogViewState extends State<LogView> {
                                   key: Key(log.id ?? log.title),
                                   direction: DismissDirection.endToStart,
                                   confirmDismiss: (direction) async {
-                                    // ========== GATEKEEPER: Check permission sebelum delete ==========
                                     final canDelete =
                                         AccessControlService.canPerform(
                                           widget.userRole,
@@ -653,8 +626,6 @@ class _LogViewState extends State<LogView> {
                                     ),
                                     child: ListTile(
                                       contentPadding: const EdgeInsets.all(16),
-                                      // ========== SYNC STATUS INDICATOR (Modul Langkah 4) ==========
-                                      // Leading: Cloud icon menunjukkan apakah data sudah di cloud atau masih lokal
                                       leading: Icon(
                                         log.id != null
                                             ? Icons.cloud_done
@@ -676,7 +647,6 @@ class _LogViewState extends State<LogView> {
                                               ),
                                             ),
                                           ),
-                                          // Task 5: Privacy indicator badge
                                           Container(
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 8,
@@ -731,10 +701,8 @@ class _LogViewState extends State<LogView> {
                                             ),
                                           ),
                                           const SizedBox(height: 8),
-                                          // Info baris: Category + Author (jika bukan milik sendiri) + Date
                                           Row(
                                             children: [
-                                              // Kategori
                                               Container(
                                                 padding:
                                                     const EdgeInsets.symmetric(
@@ -758,7 +726,6 @@ class _LogViewState extends State<LogView> {
                                                 ),
                                               ),
                                               const SizedBox(width: 8),
-                                              // Author (jika bukan milik sendiri)
                                               if (log.authorId != widget.userId)
                                                 Container(
                                                   padding:
@@ -785,7 +752,6 @@ class _LogViewState extends State<LogView> {
                                                   ),
                                                 ),
                                               const Spacer(),
-                                              // Tanggal
                                               Text(
                                                 _formatTime(log.date),
                                                 style: const TextStyle(
@@ -883,29 +849,54 @@ class _LogViewState extends State<LogView> {
       floatingActionButton: ValueListenableBuilder<bool>(
         valueListenable: ConnectivityService().isConnected,
         builder: (context, isOnline, _) {
-          return FloatingActionButton(
-            // ========== OFFLINE-FIRST: Button ALWAYS active ==========
-            // User BISA buat catatan kapan saja (online atau offline)
-            // - Online: Instant upload ke MongoDB
-            // - Offline: Simpan ke Hive, auto-sync saat online
-            onPressed: () {
-              if (!isOnline) {
-                // Show info dialog bahwa akan disimpan offline
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      ' Catatan akan disimpan lokal. Sync otomatis saat online.',
-                    ),
-                    backgroundColor: Colors.blue,
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              }
-              _goToEditor();
-            },
-            backgroundColor: isOnline ? primaryColor : Colors.blue.shade300,
-            foregroundColor: Colors.white,
-            child: const Icon(Icons.add),
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16, right: 16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // ==================== TOMBOL BUKA KAMERA ====================
+                FloatingActionButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const VisionView(),
+                      ),
+                    );
+                  },
+                  backgroundColor: Colors.pink.shade300,
+                  foregroundColor: Colors.white,
+                  tooltip: 'Buka Kamera',
+                  child: const Icon(Icons.camera_alt),
+                ),
+                const SizedBox(height: 12),
+
+                // ==================== TOMBOL CATATAN BARU ====================
+                FloatingActionButton(
+                  onPressed: () {
+                    if (!isOnline) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            ' Catatan akan disimpan lokal. Sync otomatis saat online.',
+                          ),
+                          backgroundColor: Colors.blue,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                    _goToEditor();
+                  },
+                  backgroundColor: isOnline
+                      ? primaryColor
+                      : Colors.blue.shade300,
+                  foregroundColor: Colors.white,
+                  tooltip: 'Catatan Baru',
+                  child: const Icon(Icons.add),
+                ),
+              ],
+            ),
           );
         },
       ),

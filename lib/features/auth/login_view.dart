@@ -48,9 +48,9 @@ class _LoginViewState extends State<LoginView> {
 
     if (isSuccess) {
       _loginAttempts = 0;
-      // Buat userId dari username (bisa diperbaiki dengan UUID nanti)
+
       final userId = username.toLowerCase();
-      // Ambil teamId dan role dari LoginController berdasarkan username
+
       final teamId = controller.getTeamIdForUser(username);
       final userRole = controller.getRoleForUser(username);
       Navigator.pushReplacement(

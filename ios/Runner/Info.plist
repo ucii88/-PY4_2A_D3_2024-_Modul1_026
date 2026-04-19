@@ -66,5 +66,10 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	
+	<key>NSCameraUsageDescription</key>
+	<string>Butuh kamera untuk deteksi kerusakan jalan secara real-time</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Izin mikrofon untuk perekaman audio dalam notifikasi deteksi</string>
 </dict>
 </plist>

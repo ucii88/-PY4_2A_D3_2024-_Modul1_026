@@ -51,9 +51,9 @@ class MongoService {
       _db = Db(mongoUri);
 
       await _db!.open().timeout(
-        const Duration(seconds: 15),
+        const Duration(seconds: 30), // Perpanjang timeout untuk TLS handshake
         onTimeout: () => throw Exception(
-          "Koneksi Timeout (15s). Cek IP Whitelist (0.0.0.0/0) atau sinyal HP.",
+          "Koneksi Timeout (30s). Kemungkinan: Port 27017 blocked, DNS slow, atau cluster down. Log in ke MongoDB Atlas dashboard untuk cek status.",
         ),
       );
 
@@ -224,9 +224,6 @@ class MongoService {
     }
   }
 
-  // ========== LANGKAH 4: COLLABORATIVE SYNC METHODS ==========
-
-  /// Mendapatkan logs berdasarkan teamId (untuk kolaborasi antar tim)
   Future<List<LogModel>> getLogsByTeam(String teamId) async {
     try {
       final collection = await _getSafeCollection();
@@ -260,7 +257,6 @@ class MongoService {
     }
   }
 
-  /// Insert LogModel ke MongoDB (untuk LogEditorPage create)
   Future<ObjectId?> insertLogModel(LogModel logModel) async {
     try {
       final collection = await _getSafeCollection();
@@ -283,14 +279,10 @@ class MongoService {
     }
   }
 
-  /// ========== UPSERT METHOD (Recommended untuk Offline-First) ==========
-  /// Implementasi Upsert: Update jika sudah ada (by author+title+teamId), Insert kalau belum
-  /// Ini adalah solusi resmi untuk cegah duplikat sesuai modul praktikum
   Future<Map<String, dynamic>> upsertLogModel(LogModel logModel) async {
     try {
       final collection = await _getSafeCollection();
 
-      // Filter: cari data dengan author+title+teamId yang sama
       final filter = where
           .eq('authorId', logModel.authorId)
           .eq('title', logModel.title)
@@ -298,19 +290,15 @@ class MongoService {
 
       final map = logModel.toMap();
 
-      // Gunakan updateOne dengan upsert:true
-      // Ini berarti: Update jika ada, Insert jika tidak ada
       await LogHelper.writeLog(
         "DEBUG: Attempting upsert for '${logModel.title}' (author: ${logModel.authorId})",
         source: _source,
         level: 3,
       );
 
-      final result = await collection.updateOne(
-        filter,
-        {r'$set': map},
-        upsert: true, // ← Ini adalah "magic" untuk cegah duplikat!
-      );
+      final result = await collection.updateOne(filter, {
+        r'$set': map,
+      }, upsert: true);
 
       await LogHelper.writeLog(
         "SUCCESS: Upsert completed - matched: ${result.nMatched}, modified: ${result.nModified}, upserted: ${result.nUpserted}",
@@ -334,7 +322,6 @@ class MongoService {
     }
   }
 
-  /// Update LogModel di MongoDB (untuk LogEditorPage edit)
   Future<bool> updateLogModel(String id, LogModel logModel) async {
     try {
       final collection = await _getSafeCollection();
@@ -359,7 +346,6 @@ class MongoService {
     }
   }
 
-  /// Delete LogModel dari MongoDB
   Future<bool> deleteLogModel(String id) async {
     try {
       final collection = await _getSafeCollection();
@@ -383,13 +369,11 @@ class MongoService {
     }
   }
 
-  /// Update LogModel by cloudId (untuk sync offline changes)
   Future<bool> updateLogByCloudId(ObjectId cloudId, LogModel logModel) async {
     try {
       final collection = await _getSafeCollection();
       final map = logModel.toMap();
 
-      // Update dengan _id = cloudId
       await collection.replaceOne(where.id(cloudId), map);
 
       await LogHelper.writeLog(
@@ -408,7 +392,6 @@ class MongoService {
     }
   }
 
-  /// Delete LogModel by cloudId (untuk sync offline deletions)
   Future<bool> deleteLogByCloudId(ObjectId cloudId) async {
     try {
       final collection = await _getSafeCollection();
